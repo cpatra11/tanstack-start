@@ -4,11 +4,18 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
-model Todo {
-  id        Int      @id @default(autoincrement())
-  title     String
-  createdAt DateTime @default(now())
-}
+/// Subscribers collected from the public landing page waitlist
+model Subscriber {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  email                 String   @unique
+  name                  String?
+  source                String?  // optional (e.g. "landing-page")
+  verified              Boolean  @default(false)
+  verifyToken           String?  @db.String
+  verifyTokenExpiresAt  DateTime?
+  createdAt             DateTime @default(now())
+} 

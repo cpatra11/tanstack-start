@@ -2,46 +2,39 @@ import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { prisma } from '@/db'
 
-const getTodos = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return await prisma.todo.findMany({
-    orderBy: { createdAt: 'desc' },
-  })
+const getSubscribers = createServerFn({ method: 'GET' }).handler(async () => {
+  return await prisma.subscriber.findMany({ orderBy: { createdAt: 'desc' } })
 })
 
-const createTodo = createServerFn({
-  method: 'POST',
-})
-  .inputValidator((data: { title: string }) => data)
+const createSubscriber = createServerFn({ method: 'POST' })
+  .inputValidator((data: { email: string; name?: string }) => data)
   .handler(async ({ data }) => {
-    return await prisma.todo.create({
-      data,
-    })
+    return await prisma.subscriber.create({ data })
   })
 
 export const Route = createFileRoute('/demo/prisma')({
   component: DemoPrisma,
-  loader: async () => await getTodos(),
+  loader: async () => await getSubscribers(),
 })
 
 function DemoPrisma() {
   const router = useRouter()
-  const todos = Route.useLoaderData()
+  const subs = Route.useLoaderData()
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.target as HTMLFormElement)
-    const title = formData.get('title') as string
+    const email = (formData.get('email') || '').toString()
+    const name = (formData.get('name') || '').toString()
 
-    if (!title) return
+    if (!email) return
 
     try {
-      await createTodo({ data: { title } })
+      await createSubscriber({ data: { email, name } })
       router.invalidate()
       ;(e.target as HTMLFormElement).reset()
     } catch (error) {
-      console.error('Failed to create todo:', error)
+      console.error('Failed to create subscriber:', error)
     }
   }
 
@@ -84,12 +77,12 @@ function DemoPrisma() {
           </h1>
         </div>
 
-        <h2 className="text-2xl font-bold mb-4 text-indigo-200">Todos</h2>
+        <h2 className="text-2xl font-bold mb-4 text-indigo-200">Subscribers</h2>
 
         <ul className="space-y-3 mb-6">
-          {todos.map((todo) => (
+          {subs.map((s) => (
             <li
-              key={todo.id}
+              key={s.id}
               className="rounded-lg p-4 shadow-md border transition-all hover:scale-[1.02] cursor-pointer group"
               style={{
                 background:
@@ -99,30 +92,36 @@ function DemoPrisma() {
             >
               <div className="flex items-center justify-between">
                 <span className="text-lg font-medium text-white group-hover:text-indigo-200 transition-colors">
-                  {todo.title}
+                  {s.email} {s.name ? `— ${s.name}` : ''}
                 </span>
-                <span className="text-xs text-indigo-300/70">#{todo.id}</span>
+                <span className="text-xs text-indigo-300/70">
+                  {new Date(s.createdAt).toLocaleString()}
+                </span>
               </div>
             </li>
           ))}
-          {todos.length === 0 && (
+          {subs.length === 0 && (
             <li className="text-center py-8 text-indigo-300/70">
-              No todos yet. Create one below!
+              No subscribers yet. Create one below!
             </li>
           )}
         </ul>
 
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
-            type="text"
-            name="title"
-            placeholder="Add a new todo..."
+            type="email"
+            name="email"
+            placeholder="email@example.com"
             className="flex-1 px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 transition-all text-white placeholder-indigo-300/50"
             style={{
               background: 'rgba(93, 103, 227, 0.1)',
               borderColor: 'rgba(93, 103, 227, 0.3)',
-              focusRing: 'rgba(93, 103, 227, 0.5)',
             }}
+          />
+          <input
+            name="name"
+            placeholder="Name (optional)"
+            className="px-3 py-2 rounded-lg border text-white placeholder-indigo-300/50"
           />
           <button
             type="submit"
@@ -132,7 +131,7 @@ function DemoPrisma() {
               color: 'white',
             }}
           >
-            Add Todo
+            Add Subscriber
           </button>
         </form>
 
@@ -147,7 +146,7 @@ function DemoPrisma() {
             Powered by Prisma ORM
           </h3>
           <p className="text-sm text-indigo-300/80 mb-4">
-            Next-generation ORM for Node.js & TypeScript with PostgreSQL
+            Next-generation ORM for Node.js & TypeScript with MongoDB
           </p>
           <div className="space-y-2 text-sm">
             <p className="text-indigo-200 font-medium">Setup Instructions:</p>

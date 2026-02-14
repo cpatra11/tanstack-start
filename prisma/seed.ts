@@ -1,29 +1,23 @@
 import { PrismaClient } from '../src/generated/prisma/client.js'
 
-import { PrismaPg } from '@prisma/adapter-pg'
-
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL!,
-})
-
-const prisma = new PrismaClient({ adapter })
+const prisma = new PrismaClient()
 
 async function main() {
   console.log('🌱 Seeding database...')
 
-  // Clear existing todos
-  await prisma.todo.deleteMany()
+  // Clear existing subscribers
+  await prisma.subscriber.deleteMany()
 
-  // Create example todos
-  const todos = await prisma.todo.createMany({
+  // Create example subscribers
+  const subs = await prisma.subscriber.createMany({
     data: [
-      { title: 'Buy groceries' },
-      { title: 'Read a book' },
-      { title: 'Workout' },
+      { email: 'priya@example.com', name: 'Priya K', source: 'seed' },
+      { email: 'arjun@example.com', name: 'Arjun M', source: 'seed' },
+      { email: 'test@example.com', name: 'Test User', source: 'seed' },
     ],
   })
 
-  console.log(`✅ Created ${todos.count} todos`)
+  console.log(`✅ Created ${subs.count} subscribers`)
 }
 
 main()
